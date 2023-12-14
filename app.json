@@ -1,0 +1,22 @@
+{
+  "expo": {
+    "name": "leitor-nfc",
+    "slug": "leitor-nfc",
+    "version": "1.0.0",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "fa28fe34-e1a5-461c-9203-799042220a40"
+      }
+    },
+    "owner": "eobruno",
+    "android": {
+      "package": "com.eobruno.leitornfc"
+    },
+    "ios": {
+      "bundleIdentifier": "com.eobruno.leitornfc"
+    }
+  }
+}
