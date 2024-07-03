@@ -8,6 +8,8 @@ import Home from '../screens/Home';
 import Teste from '../screens/Teste';
 import Passaporte from '../screens/Passaporte';
 import LerEscrever from '../screens/LerEscrever';
+import TransceiveTest from '../screens/TransceiveTest';
+import Teste2 from '../screens/Teste2';
 
 // Crie o Stack Navigator
 const Stack = createNativeStackNavigator();
@@ -19,8 +21,10 @@ const Navigation: React.FC = () => {
             <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName="Home">
                 <Stack.Screen name="Home" component={Home} />
                 <Stack.Screen name="Teste" component={Teste} />
+                <Stack.Screen name="Teste2" component={Teste2} />
                 <Stack.Screen name="Passaporte" component={Passaporte} />
                 <Stack.Screen name="LerEscrever" component={LerEscrever} />
+                <Stack.Screen name="TransceiveTest" component={TransceiveTest} />
             </Stack.Navigator>
         </NavigationContainer>
     );

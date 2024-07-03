@@ -24,6 +24,18 @@ const Home = ({ navigation }) => {
             >
                 <Text style={styles.buttonText}>Passaporte</Text>
             </TouchableOpacity>
+            <TouchableOpacity
+                style={[styles.button, { backgroundColor: '#6a6eac' }]}
+                onPress={() => navigation.navigate('Teste2')}
+            >
+                <Text style={styles.buttonText}>Teste 2</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+                style={[styles.button, { backgroundColor: '#6e6aac' }]}
+                onPress={() => navigation.navigate('TransceiveTest')}
+            >
+                <Text style={styles.buttonText}>TransceiveTest</Text>
+            </TouchableOpacity>
         </View>
     );
 };

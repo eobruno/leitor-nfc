@@ -76,6 +76,20 @@ const Passaporte = () => {
 
       console.log('Resposta ao comando Select Applet:', responseSelectApplet);
 
+      const commandMutualAuth = [0x00, 0x82, 0x00, 0x00, 0x08, ...bacKey]; // Incluindo bacKey no comando
+      let mutualAuthResponse;
+
+      if (Platform.OS === 'ios') {
+        mutualAuthResponse = await NfcManager.sendCommandAPDUIOS(commandMutualAuth);
+      } else {
+        mutualAuthResponse = await NfcManager.transceive(commandMutualAuth);
+      }
+
+      if (mutualAuthResponse) {
+        console.log('Autenticação BAC bem-sucedida');
+      } else {
+        console.log('Falha na autenticação BAC');
+      }
     } catch (error) {
       console.error('Erro na autenticação BAC:', error);
     }
@@ -89,7 +103,6 @@ const Passaporte = () => {
 
       if (Platform.OS === 'ios') {
         response = await NfcManager.sendCommandAPDUIOS(commandReadBinary);
-        console.log('Resposta ao comando Leitura Binária:', response);
       } else {
         response = await NfcManager.transceive(commandReadBinary);
       }
