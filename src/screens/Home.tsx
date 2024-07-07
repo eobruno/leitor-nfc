@@ -10,31 +10,31 @@ const Home = ({ navigation }) => {
                 style={[styles.button, { backgroundColor: '#6dac6a' }]}
                 onPress={() => navigation.navigate('Teste')}
             >
-                <Text style={styles.buttonText}>Teste</Text>
+                <Text style={styles.buttonText}>TESTE</Text>
             </TouchableOpacity>
             <TouchableOpacity
                 style={[styles.button, { backgroundColor: '#acab6a' }]}
-                onPress={() => navigation.navigate('LerEscrever')}
+                onPress={() => navigation.navigate('Teste2')}
             >
-                <Text style={styles.buttonText}>Ler e Escrever</Text>
+                <Text style={styles.buttonText}>TESTE 2</Text>
             </TouchableOpacity>
             <TouchableOpacity
                 style={[styles.button, { backgroundColor: '#6a8cac' }]}
-                onPress={() => navigation.navigate('Passaporte')}
+                onPress={() => navigation.navigate('Teste3')}
             >
-                <Text style={styles.buttonText}>Passaporte</Text>
+                <Text style={styles.buttonText}>TESTE 3</Text>
             </TouchableOpacity>
             <TouchableOpacity
                 style={[styles.button, { backgroundColor: '#6a6eac' }]}
-                onPress={() => navigation.navigate('Teste2')}
+                onPress={() => navigation.navigate('Teste4')}
             >
-                <Text style={styles.buttonText}>Teste 2</Text>
+                <Text style={styles.buttonText}>TESTE 4</Text>
             </TouchableOpacity>
             <TouchableOpacity
-                style={[styles.button, { backgroundColor: '#6e6aac' }]}
-                onPress={() => navigation.navigate('TransceiveTest')}
+                style={[styles.button, { backgroundColor: '#966aac' }]}
+                onPress={() => navigation.navigate('Teste5')}
             >
-                <Text style={styles.buttonText}>TransceiveTest</Text>
+                <Text style={styles.buttonText}>TESTE 5</Text>
             </TouchableOpacity>
         </View>
     );

@@ -9,12 +9,12 @@ import {
   TouchableOpacity,
 } from "react-native";
 import NfcManager, { NfcTech } from "react-native-nfc-manager";
-import { accessPassportChip } from "../util/passaportReader2";
+import { accessPassportChip } from "../util/passaportReader4";
 
 // Inicialização do gerenciador NFC
 NfcManager.start();
 
-const Teste2 = () => {
+const Teste4 = () => {
   const handleReadPassport = async () => {
     try {
       const mrzData = {
@@ -32,6 +32,7 @@ const Teste2 = () => {
 
   return (
     <SafeAreaView style={styles.container}>
+    <View><Text>TESTE 4</Text></View>
       <View style={styles.buttonContainer}>
         <TouchableOpacity
           style={[styles.button, { backgroundColor: "#7bac6a" }]}
@@ -70,4 +71,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Teste2;
+export default Teste4;

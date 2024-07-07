@@ -1,117 +1,246 @@
-import React from 'react';
-import { View, Text, Button, Platform } from 'react-native';
-import NfcManager, { NfcTech } from 'react-native-nfc-manager';
-import SHA1 from 'crypto-js/sha1';
-import { enc } from 'crypto-js';
+import React from "react";
+import { View, Text, Button, Platform } from "react-native";
+import NfcManager, { NfcTech } from "react-native-nfc-manager";
+import CryptoJS from "crypto-js";
+import { deriveBacKey } from "../util/BACKey";
+import { randomBytes } from "react-native-randombytes";
+
+const mrz = {
+  documentNumber: "FH445810",
+  dateOfBirth: "800422",
+  dateOfExpiry: "180221",
+};
 
 const Passaporte = () => {
-
   const readPassportChip = async () => {
-    console.log('Iniciando leitura do chip de passaporte...');
+    console.log("Iniciando leitura do chip de passaporte...");
     try {
-      let tech = Platform.OS === 'ios' ? NfcTech.IsoDep : NfcTech.IsoDep;
-      console.log('Solicitando tecnologia NFC...');
+      const tech = Platform.OS === "ios" ? NfcTech.IsoDep : NfcTech.IsoDep;
+      console.log("Solicitando tecnologia NFC...");
       await NfcManager.requestTechnology(tech, {
-        alertMessage: 'Pronto para ler o chip do passaporte!'
+        alertMessage: "Pronto para ler o chip do passaporte!",
       });
-      console.log('Tecnologia solicitada com sucesso');
+      console.log("Tecnologia solicitada com sucesso");
 
       const tag = await NfcManager.getTag();
-      console.log('Tag lida:', tag);
+      console.log("Tag lida:", tag);
 
-      const mrz = {
-        documentNumber: 'FH445810',
-        dateOfBirth: '800422',
-        dateOfExpiry: '180221'
-      };
+      await selectAppCommand();
+
+      const challenge = await getChallengeCommand();
+      console.log("Desafio (RND.ICC):", challenge);
 
       const bacKey = deriveBacKey(mrz);
-      console.log('Chave BAC derivada:', Array.from(bacKey).map(byte => byte.toString(16).padStart(2, '0')).join(''));
+      console.log(
+        "Chave BAC derivada:",
+        Array.from(bacKey)
+          .map((byte) => byte.toString(16).padStart(2, "0"))
+          .join("")
+      );
 
-      await authenticateWithBAC(bacKey);
-      const passportData = await readChipData();
-      console.log('Dados do passaporte:', passportData);
-
+      await mutualAuthCommand(challenge, bacKey);
+      await selectFileCommand();
+      await readBinaryCommand();
     } catch (error) {
-      console.error('Erro ao solicitar tecnologia NFC ou durante a leitura do chip:', error);
+      console.error(
+        "Erro ao solicitar tecnologia NFC ou durante a leitura do chip:",
+        error
+      );
     } finally {
       await NfcManager.cancelTechnologyRequest();
-      console.log('Requisição de tecnologia cancelada');
+      console.log("Requisição de tecnologia cancelada");
     }
   };
 
-  const deriveBacKey = (mrz) => {
-    console.log(mrz);
-    const documentNumber = mrz.documentNumber;
-    const dateOfBirth = mrz.dateOfBirth;
-    const dateOfExpiry = mrz.dateOfExpiry;
+  // 1. Seleção do Aplicativo
+  const selectAppCommand = async () => {
+    const commandSelect = [
+      0x00, 0xa4, 0x04, 0x0c, 0x07, 0xa0, 0x00, 0x00, 0x02, 0x47, 0x10, 0x01,
+      0x00,
+    ];
 
-    const kSeed = documentNumber + dateOfBirth + dateOfExpiry;
-    const sha1Hash = SHA1(kSeed);
-    console.log('sha1Hash:', sha1Hash.toString());
+    const commandSelectTest = [0x00, 0x84, 0x00, 0x00, 0x08];
 
-    const keyHex = sha1Hash.toString(enc.Hex);
-    const keyArray = Uint8Array.from(
-      keyHex.match(/.{1,2}/g).map(byte => parseInt(byte, 16))
-    );
-    const keyBuffer = keyArray.slice(0, 16);
-
-    console.log('Chave derivada:', Array.from(keyBuffer).map(byte => byte.toString(16).padStart(2, '0')).join(''));
-    console.log('Buffer da chave:', keyBuffer);
-
-    return keyBuffer;
-  };
-
-  const authenticateWithBAC = async (bacKey) => {
-    const commandSelectApplet = [0x00, 0x84, 0x00, 0x00, 0x08]; // Comando que funcionou para você
-    
     try {
-      let responseSelectApplet;
+      let responseSelectApp;
 
-      if (Platform.OS === 'ios') {
-        responseSelectApplet = await NfcManager.sendCommandAPDUIOS(commandSelectApplet);
+      if (Platform.OS === "ios") {
+        responseSelectApp = await NfcManager.sendCommandAPDUIOS(commandSelectTest);
       } else {
-        responseSelectApplet = await NfcManager.transceive(commandSelectApplet);
+        responseSelectApp = await NfcManager.transceive(commandSelect);
       }
-
-      console.log('Resposta ao comando Select Applet:', responseSelectApplet);
-
+      console.log("Seleção do Aplicativo:", responseSelectApp);
     } catch (error) {
-      console.error('Erro na autenticação BAC:', error);
+      console.error("Erro na Seleção do Aplicativo:", error);
     }
   };
 
-  const readChipData = async () => {
-    const commandReadBinary = [0x00, 0xB0, 0x00, 0x00, 0x20];
-    
+  // 2. Get Challenge
+  const getChallengeCommand = async () => {
+    const commandGetChallenge = {
+      cla: 0x00,
+      ins: 0x84,
+      p1: 0x00,
+      p2: 0x00,
+      data: [],
+      le: 0x08,
+    };
+
     try {
-      let response;
+      let responseGetChallenge;
 
-      if (Platform.OS === 'ios') {
-        response = await NfcManager.sendCommandAPDUIOS(commandReadBinary);
-        console.log('Resposta ao comando Leitura Binária:', response);
+      if (Platform.OS === "ios") {
+        responseGetChallenge = await NfcManager.sendCommandAPDUIOS(
+          commandGetChallenge
+        );
       } else {
-        response = await NfcManager.transceive(commandReadBinary);
+        responseGetChallenge = await NfcManager.transceive([
+          0x00, 0x84, 0x00, 0x00, 0x08,
+        ]);
       }
+      console.log("Resposta ao comando Get Challenge:", responseGetChallenge);
+      const challenge = responseGetChallenge.response;
+      console.log("Desafio (RND.ICC):", challenge);
 
-      if (response) {
-        const data = parseChipData(response);
-        return data;
-      }
+      return challenge;
     } catch (error) {
-      console.error('Erro na leitura dos dados do chip:', error);
+      console.error("Erro ao obter desafio:", error);
     }
-    return null;
   };
 
-  const parseChipData = (response) => {
-    const data = {}; 
-    return data;
+  // 3. Autenticação Mútua
+  const mutualAuthCommand = async (challenge, bacKey) => {
+    let ksEncArray;
+    let encryptedToken;
+    let rndIFDArray;
+    let token;
+
+    // Gerar KSenc e KSmac
+    try {
+      const bacKeyArray = Array.from(bacKey); // Garante que bacKey é um array de bytes
+
+      ksEncArray = CryptoJS.SHA1(
+        CryptoJS.lib.WordArray.create([...bacKeyArray, 0, 0, 0, 1])
+      )
+        .toString(CryptoJS.enc.Hex)
+        .slice(0, 16);
+      const ksMacArray = CryptoJS.SHA1(
+        CryptoJS.lib.WordArray.create([...bacKeyArray, 0, 0, 0, 2])
+      )
+        .toString(CryptoJS.enc.Hex)
+        .slice(0, 16);
+
+      console.log("KSenc:", ksEncArray);
+      console.log("KSmac:", ksMacArray);
+    } catch (error) {
+      console.error("Erro ao gerar KSenc e KSmac:", error);
+    }
+
+    try {
+      // Gerar RND.IFD usando react-native-randombytes
+      rndIFDArray = await new Promise((resolve, reject) => {
+        randomBytes(8, (err, bytes) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(bytes.toString("hex"));
+          }
+        });
+      });
+      console.log("RND.IFD:", rndIFDArray);
+
+      // Concatenar RND.IFD, RND.ICC e um identificador de sequência de bits
+      const kic = challenge.join("");
+      token = CryptoJS.enc.Hex.parse(rndIFDArray + kic + "0000000000000000");
+      console.log("Token concatenado:", token.toString(CryptoJS.enc.Hex));
+
+      // Criptografar o token usando 3DES
+      encryptedToken = CryptoJS.TripleDES.encrypt(
+        token,
+        CryptoJS.enc.Hex.parse(ksEncArray),
+        {
+          mode: CryptoJS.mode.ECB,
+          padding: CryptoJS.pad.NoPadding,
+        }
+      ).ciphertext.toString(CryptoJS.enc.Hex);
+
+      console.log("Token criptografado:", encryptedToken);
+    } catch (error) {
+      console.error(
+        "Concatenar RND.IFD, RND.ICC ou criptografar token:",
+        error
+      );
+    }
+
+    const commandMutualAuth = [
+      0x00,
+      0x82,
+      0x00,
+      0x00,
+      encryptedToken.length / 2,
+      ...encryptedToken.match(/.{1,2}/g).map((byte) => parseInt(byte, 16)),
+    ];
+
+    try {
+      const responseMutualAuth = await NfcManager.sendCommandAPDUIOS(
+        commandMutualAuth
+      );
+      console.log(
+        "Resposta ao comando de Autenticação Mútua:",
+        responseMutualAuth
+      );
+    } catch (error) {
+      console.error("Erro na Autenticação Mútua:", error);
+    }
+  };
+
+  // 4. Seleção de Arquivo (por exemplo, DG1)
+  const selectFileCommand = async () => {
+    const commandSelectDG1 = [
+      0x00,
+      0xa4,
+      0x04,
+      0x0c,
+      0x02,
+      0x5f,
+      0x1f,
+      0x00, // Exemplo de comando para selecionar DG1
+    ];
+
+    try {
+      const responseSelectDG1 = await NfcManager.sendCommandAPDUIOS(
+        commandSelectDG1
+      );
+      console.log("Seleção de Arquivo DG1:", responseSelectDG1);
+    } catch (error) {
+      console.error("Erro na Seleção de Arquivo DG1:", error);
+    }
+  };
+
+  // 5. Leitura de Dados Binários
+  const readBinaryCommand = async () => {
+    const commandReadBinary = {
+      cla: 0x00,
+      ins: 0xb0,
+      p1: 0x00,
+      p2: 0x00,
+      data: [],
+      le: 0x00, // Ler até o fim do arquivo
+    };
+
+    try {
+      const responseReadBinary = await NfcManager.sendCommandAPDUIOS(
+        commandReadBinary
+      );
+      console.log("Dados Binários Lidos:", responseReadBinary);
+    } catch (error) {
+      console.error("Erro ao Ler Dados Binários:", error);
+    }
   };
 
   return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-      <Text>NFC Passport Reader</Text>
+    <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+      <Text>PASSAPORTE</Text>
       <Button title="Read Passport Chip" onPress={readPassportChip} />
     </View>
   );

@@ -5,11 +5,13 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 // Importe os componentes de tela
 import Home from '../screens/Home';
+
+;
 import Teste from '../screens/Teste';
-import Passaporte from '../screens/Passaporte';
-import LerEscrever from '../screens/LerEscrever';
-import TransceiveTest from '../screens/TransceiveTest';
 import Teste2 from '../screens/Teste2';
+import Teste3 from '../screens/Teste3';
+import Teste4 from '../screens/Teste4';
+import Teste5 from '../screens/Teste5';
 
 // Crie o Stack Navigator
 const Stack = createNativeStackNavigator();
@@ -22,9 +24,9 @@ const Navigation: React.FC = () => {
                 <Stack.Screen name="Home" component={Home} />
                 <Stack.Screen name="Teste" component={Teste} />
                 <Stack.Screen name="Teste2" component={Teste2} />
-                <Stack.Screen name="Passaporte" component={Passaporte} />
-                <Stack.Screen name="LerEscrever" component={LerEscrever} />
-                <Stack.Screen name="TransceiveTest" component={TransceiveTest} />
+                <Stack.Screen name="Teste3" component={Teste3} />
+                <Stack.Screen name="Teste4" component={Teste4} />
+                <Stack.Screen name="Teste5" component={Teste5} />
             </Stack.Navigator>
         </NavigationContainer>
     );
